@@ -1,0 +1,44 @@
+---
+- name: 
+  git:
+    repo: 'https://github.com/VKCOM/lighthouse'
+    dest: /var/www/lighthouse
+    update: no
+
+- name: Обновление списка пакетов
+  apt:
+    update_cache: yes
+
+- name: Установка Nginx
+  apt:
+    name: nginx
+    state: present
+
+- name: Создание файла конфигурации для Nginx
+  template:
+    src: lighthouse.j2
+    dest: /etc/nginx/sites-available/lighthouse
+    owner: "root"
+    group: "root"
+    mode: '0644'
+
+- name: Удаление дефолтного конфига Nginx
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: reload nginx
+
+- name: Активация конфига Lighthouse в Nginx (создание ссылки)
+  file:
+    src: /etc/nginx/sites-available/lighthouse
+    dest: /etc/nginx/sites-enabled/lighthouse
+    state: link
+  notify: reload nginx
+
+- name: Установка прав на директорию Lighthouse
+  file:
+    path: /var/www/lighthouse
+    owner: www-data
+    group: www-data
+    mode: '0755'
+    recurse: yes
